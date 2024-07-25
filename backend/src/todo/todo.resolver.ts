@@ -1,30 +1,30 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Inject } from '@nestjs/common';
 import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Todo } from 'src/todo/todo.model';
+import { TodoService } from 'src/todo/todo.service';
 
 @Resolver((of) => Todo)
 export class TodoResolver {
-  todos: Todo[] = [
-    {
-      id: 1,
-      text: 'Todo 1',
-      done: false,
-    },
-    {
-      id: 2,
-      text: 'Todo 2',
-      done: true,
-    },
-  ];
+  constructor(@Inject(TodoService) private todoService: TodoService) {}
+
+  @Query((returns) => [Todo])
+  async searchTodos(
+    @Args('done', { type: () => Boolean, nullable: true }) done?: boolean,
+    @Args('text', { type: () => String, nullable: true }) text?: string,
+  ) {
+    return this.todoService.search(done, text);
+  }
 
   @Query((returns) => [Todo])
   async getAllTodo() {
-    return this.todos;
+    return this.todoService.findAll();
   }
 
   @Query((returns) => Todo)
   async getAllTodoById(@Args('id', { type: () => Int }) id: number) {
-    return this.todos.find((todo) => todo.id === id);
+    return this.todoService.findOne(id);
   }
 
   @Mutation((returns) => Todo)
@@ -32,13 +32,7 @@ export class TodoResolver {
     @Args('text') text: string,
     @Args('done', { type: () => Boolean, defaultValue: false }) done: boolean,
   ): Promise<Todo> {
-    const newTodo: Todo = {
-      id: this.todos.length + 1,
-      text,
-      done,
-    };
-    this.todos.push(newTodo);
-    return newTodo;
+    return this.todoService.create(text, done);
   }
 
   @Mutation((returns) => Todo)
@@ -47,24 +41,24 @@ export class TodoResolver {
     @Args('text', { type: () => String }) text: string,
     @Args('done', { type: () => Boolean }) done: boolean,
   ): Promise<Todo> {
-    const todo = this.todos.find((todo) => todo.id === id);
+    const todo = await this.todoService.findOne(id);
     if (!todo) {
       throw new Error('Todo not found');
     }
     todo.done = done;
     todo.text = text;
-    return todo;
+    return this.todoService.update(id, text, done);
   }
 
   @Mutation((returns) => Boolean)
   async deleteTodo(
     @Args('id', { type: () => Int }) id: number,
   ): Promise<boolean> {
-    const index = this.todos.findIndex((todo) => todo.id === id);
-    if (index === -1) {
+    const todo = await this.todoService.findOne(id);
+    if (todo === undefined) {
       throw new Error('Todo not found');
     }
-    this.todos.splice(index, 1);
+    this.deleteTodo(id);
     return true;
   }
 }

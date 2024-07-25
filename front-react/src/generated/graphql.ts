@@ -46,11 +46,18 @@ export type Query = {
   __typename?: 'Query';
   getAllTodo: Array<Todo>;
   getAllTodoById: Todo;
+  searchTodos: Array<Todo>;
 };
 
 
 export type QueryGetAllTodoByIdArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QuerySearchTodosArgs = {
+  done?: InputMaybe<Scalars['Boolean']['input']>;
+  text?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Todo = {
@@ -59,6 +66,14 @@ export type Todo = {
   id: Scalars['Int']['output'];
   text: Scalars['String']['output'];
 };
+
+export type SearchTodosQueryVariables = Exact<{
+  done?: InputMaybe<Scalars['Boolean']['input']>;
+  text?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type SearchTodosQuery = { __typename?: 'Query', searchTodos: Array<{ __typename?: 'Todo', id: number, text: string, done: boolean }> };
 
 export type GetAllTodosQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -76,6 +91,7 @@ export type UpdateTodoMutation = { __typename?: 'Mutation', updateTodoStatus: { 
 
 export type AddTodoMutationVariables = Exact<{
   text: Scalars['String']['input'];
+  done: Scalars['Boolean']['input'];
 }>;
 
 
@@ -89,6 +105,49 @@ export type DeleteTodoMutationVariables = Exact<{
 export type DeleteTodoMutation = { __typename?: 'Mutation', deleteTodo: boolean };
 
 
+export const SearchTodosDocument = gql`
+    query SearchTodos($done: Boolean, $text: String) {
+  searchTodos(done: $done, text: $text) {
+    id
+    text
+    done
+  }
+}
+    `;
+
+/**
+ * __useSearchTodosQuery__
+ *
+ * To run a query within a React component, call `useSearchTodosQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSearchTodosQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSearchTodosQuery({
+ *   variables: {
+ *      done: // value for 'done'
+ *      text: // value for 'text'
+ *   },
+ * });
+ */
+export function useSearchTodosQuery(baseOptions?: Apollo.QueryHookOptions<SearchTodosQuery, SearchTodosQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SearchTodosQuery, SearchTodosQueryVariables>(SearchTodosDocument, options);
+      }
+export function useSearchTodosLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SearchTodosQuery, SearchTodosQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SearchTodosQuery, SearchTodosQueryVariables>(SearchTodosDocument, options);
+        }
+export function useSearchTodosSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<SearchTodosQuery, SearchTodosQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SearchTodosQuery, SearchTodosQueryVariables>(SearchTodosDocument, options);
+        }
+export type SearchTodosQueryHookResult = ReturnType<typeof useSearchTodosQuery>;
+export type SearchTodosLazyQueryHookResult = ReturnType<typeof useSearchTodosLazyQuery>;
+export type SearchTodosSuspenseQueryHookResult = ReturnType<typeof useSearchTodosSuspenseQuery>;
+export type SearchTodosQueryResult = Apollo.QueryResult<SearchTodosQuery, SearchTodosQueryVariables>;
 export const GetAllTodosDocument = gql`
     query GetAllTodos {
   getAllTodo {
@@ -168,8 +227,8 @@ export type UpdateTodoMutationHookResult = ReturnType<typeof useUpdateTodoMutati
 export type UpdateTodoMutationResult = Apollo.MutationResult<UpdateTodoMutation>;
 export type UpdateTodoMutationOptions = Apollo.BaseMutationOptions<UpdateTodoMutation, UpdateTodoMutationVariables>;
 export const AddTodoDocument = gql`
-    mutation AddTodo($text: String!) {
-  createTodo(text: $text, done: false) {
+    mutation AddTodo($text: String!, $done: Boolean!) {
+  createTodo(text: $text, done: $done) {
     id
     text
     done
@@ -192,6 +251,7 @@ export type AddTodoMutationFn = Apollo.MutationFunction<AddTodoMutation, AddTodo
  * const [addTodoMutation, { data, loading, error }] = useAddTodoMutation({
  *   variables: {
  *      text: // value for 'text'
+ *      done: // value for 'done'
  *   },
  * });
  */

@@ -9,6 +9,7 @@ type Todo {
 }
 
 type Query {
+  searchTodos(done: Boolean, text: String): [Todo!]!
   getAllTodo: [Todo!]!
   getAllTodoById(id: Int!): Todo!
 }
